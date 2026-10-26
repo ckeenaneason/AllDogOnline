@@ -18,12 +18,15 @@ const outDir = `${root}dist/${target}`;
 
 // Emits manifest.json for the selected target browser. Chrome is the base file. Firefox must
 // be modified since service workers are not supported.
+// Also copies src/icons into dist/icons for the manifest's icon entries.
 function manifest() {
   const file = `${root}manifest.json`;
+  const iconsDir = `${srcDir}/icons`;
   return {
     name: 'ado-manifest',
     buildStart() {
       this.addWatchFile(file);
+      for (const icon of readdirSync(iconsDir)) this.addWatchFile(`${iconsDir}/${icon}`);
     },
     generateBundle() {
       const m = JSON.parse(readFileSync(file, 'utf8'));
@@ -38,6 +41,9 @@ function manifest() {
         };
       }
       this.emitFile({ type: 'asset', fileName: 'manifest.json', source: JSON.stringify(m, null, 2) });
+      for (const icon of readdirSync(iconsDir)) {
+        this.emitFile({ type: 'asset', fileName: `icons/${icon}`, source: readFileSync(`${iconsDir}/${icon}`) });
+      }
     }
   };
 }

@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>All Dog Online - Drop Logger</title>
+    <link rel="stylesheet" href="./popup.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Drop Logger</h1>
+      <span id="status" class="status"></span>
+    </header>
+
+    <div class="toolbar">
+      <button id="pause" type="button"></button>
+      <label><input id="byArea" type="checkbox" /> Split by area</label>
+    </div>
+
+    <main id="list"></main>
+
+    <footer>
+      <button id="exportCsv" type="button">Export CSV</button>
+      <button id="exportJson" type="button">Export JSON</button>
+      <button id="clear" type="button" class="danger">Clear</button>
+    </footer>
+
+    <details class="debug">
+      <summary>Debug</summary>
+      <label><input id="saveSnapshots" type="checkbox" /> Save sanitized snapshots</label>
+      <button id="exportSnapshots" type="button">Export snapshots</button>
+    </details>
+
+    <script type="module" src="./popup.ts"></script>
+  </body>
+</html>

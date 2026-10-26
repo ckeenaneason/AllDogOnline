@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "Dog Online Drop Logger",
+  "version": "0.1.0",
+  "description": "Passively logs tower mob encounters and loot on Dog Online to measure drop rates.",
+  "permissions": ["storage", "unlimitedStorage"],
+  "background": {
+    "service_worker": "service.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "Dog Online Drop Logger",
+    "default_popup": "popup/index.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://*.dogonline.net/*"],
+      "js": ["interceptor.js"],
+      "run_at": "document_start",
+      "world": "MAIN",
+      "all_frames": true
+    },
+    {
+      "matches": ["https://*.dogonline.net/*"],
+      "js": ["tracker.js"],
+      "run_at": "document_start",
+      "all_frames": true
+    }
+  ]
+}

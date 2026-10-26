@@ -1,0 +1,30 @@
+# COMMANDS
+# docker compose up
+# -- installs dependencies, builds the extension into apps/extension/dist, and rebuilds on changes for live dev
+# docker compose run --rm test
+# -- runs the core unit tests once
+#
+# see README for more
+
+# Define global 'node' config
+x-node: &node
+  build: .
+  image: alldogonline-node
+  working_dir: /app
+  volumes:
+    - .:/app
+    # Keep node_modules inside Docker
+    - node_modules:/app/node_modules
+
+services:
+  dev:
+    <<: *node
+    command: sh -c "npm install && npm run dev"
+
+  test:
+    <<: *node
+    profiles: ['test']
+    command: sh -c "npm install --no-audit --no-fund && npm test"
+
+volumes:
+  node_modules:

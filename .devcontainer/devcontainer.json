@@ -1,0 +1,25 @@
+{
+  "name": "AllDogOnline",
+  // Reuse the compose setup: same image, bind mount and node_modules volume as `docker compose up`.
+  "dockerComposeFile": "../compose.yaml",
+  "service": "dev",
+  "workspaceFolder": "/app",
+  // Keep the service's own command (npm install + build watcher) running while VS Code is attached.
+  "overrideCommand": false,
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "vitest.explorer",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "editorconfig.editorconfig"
+      ],
+      "settings": {
+        "js/ts.tsdk.path": "node_modules/typescript/lib",
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "editor.formatOnSave": true,
+        "eslint.useFlatConfig": true
+      }
+    }
+  }
+}

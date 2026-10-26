@@ -1,0 +1,157 @@
+:root {
+  --bg: #ffffff;
+  --fg: #1a202c;
+  --muted: #718096;
+  --border: #e2e8f0;
+  --surface: #f7fafc;
+  --accent: #2b6cb0;
+  --danger: #c53030;
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1a202c;
+    --fg: #edf2f7;
+    --muted: #a0aec0;
+    --border: #2d3748;
+    --surface: #232b3a;
+    --accent: #63b3ed;
+    --danger: #fc8181;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  width: 380px;
+  max-height: 580px;
+  margin: 0;
+  padding: 12px;
+  background: var(--bg);
+  color: var(--fg);
+  font:
+    13px/1.4 system-ui,
+    sans-serif;
+}
+
+header,
+.toolbar,
+footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+header {
+  justify-content: space-between;
+}
+
+h1 {
+  margin: 0;
+  font-size: 15px;
+}
+
+h2 {
+  margin: 12px 0 4px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.status,
+.meta,
+.muted,
+.ci {
+  color: var(--muted);
+}
+
+.toolbar {
+  margin: 8px 0;
+  justify-content: space-between;
+}
+
+button {
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--fg);
+  font: inherit;
+  cursor: pointer;
+}
+
+button:hover {
+  border-color: var(--accent);
+}
+
+button.danger {
+  margin-left: auto;
+  color: var(--danger);
+}
+
+#list {
+  max-height: 380px;
+  overflow-y: auto;
+  border-top: 1px solid var(--border);
+}
+
+.empty {
+  padding: 16px 0;
+  text-align: center;
+}
+
+details.source {
+  border-bottom: 1px solid var(--border);
+}
+
+details.source summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 2px;
+  cursor: pointer;
+}
+
+.name {
+  font-weight: 600;
+}
+
+table {
+  width: 100%;
+  margin-bottom: 8px;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+th,
+td {
+  padding: 2px 4px;
+  text-align: right;
+}
+
+th:first-child,
+td:first-child {
+  text-align: left;
+}
+
+th {
+  font-weight: 500;
+  color: var(--muted);
+}
+
+footer {
+  margin-top: 10px;
+}
+
+details.debug {
+  margin-top: 10px;
+  color: var(--muted);
+}
+
+details.debug label {
+  margin-right: 8px;
+}

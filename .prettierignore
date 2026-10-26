@@ -1,0 +1,6 @@
+dist/
+logs/
+package-lock.json
+
+# Real game captures; keep them byte-for-byte as recorded.
+packages/core/test/fixtures/

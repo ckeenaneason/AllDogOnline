@@ -1,0 +1,82 @@
+enum SourceType {
+  MOB
+  CHEST
+  GACHA
+  BUSH
+  TOGBU
+  CACTUS
+  FISH
+  FARM
+}
+
+model Snapshot {
+  id String @id //pull from submission - uuid
+
+  sourceId Int
+  source Source @relation(fields: [sourceId], references: [id])
+
+  schemaVersion Int
+  extensionVersion String
+  doBuildId String //store, but don't agg off of?
+
+  userId String
+  user User @relation(fields: [userId], references: [id])
+
+  recordedAt DateTime
+  receivedAt DateTime @default(now())
+
+  coins Int?
+
+  //track any revokes; reversable
+  revokedAt DateTime?
+  revokedReason String?
+
+  drops ItemDrop[]
+
+  @@index([userId])
+  @@index([sourceId])
+  @@index([receivedAt])
+}
+
+model ItemDrop {
+  snapshotId String //uuid
+  itemId Int
+  quantity Int
+
+  snapshot Snapshot @relation(fields: [snapshotId], references: [id], onDelete: Cascade)
+  item Item @relation(fields: [itemId], references: [id])
+
+  @@id([snapshotId, itemId])
+  @@index([itemId]) 
+}
+
+model FishCondition {
+  id Int @id @default(autoincrement())
+
+  weatherId Int
+  weather Weather @relation(fields: [weatherId], references: [id])
+
+  areaId Int
+  area FishingArea @relation(fields: [areaId], references: [id])
+
+  //will need to include a 'no bait' item
+  baitId Int
+  bait Item @relation(name: "bait", fields: [baitId], references: [id])
+
+  toolId Int
+  tool Item @relation(name: "tool", fields: [toolId], references: [id])
+
+  source Source[]
+
+  @@unique([weatherId, areaId, baitId, toolId])
+}
+
+model Weather {
+  id Int @id @default(autoincrement())
+  timeOfDay String
+  weather String
+
+  fishCondition FishCondition[]
+
+  @@unique([timeOfDay, weather])
+}

@@ -1,0 +1,195 @@
+enum StatBlockType {
+  RECEIVED
+  REQUIRED
+}
+
+model Source {
+  id Int @id @default(autoincrement())
+  type SourceType
+
+  // Unique Source Key
+  // Format: TYPE|external_id|condition
+  // Example: MOB|enemy_booby_trap|floor-2
+  // Example: FISH|spooky|gumchum|rod_ancient_angler|snowy|evening
+  key String @unique 
+  reviewed Boolean @default(false)
+  condtion String
+
+  //canon source
+  mobId Int?
+  mob Mob? @relation(fields: [mobId], references: [id])
+  chestId Int?
+  chest Chest? @relation(fields: [chestId], references: [id])
+
+  //conditions
+  floorId Int?
+  floor Floor? @relation(fields: [floorId], references: [id])
+  fishConditionId Int?
+  fishCondition FishCondition? @relation(fields: [fishConditionId], references: [id])
+  
+  aggSource AggSource[]
+  snapshots Snapshot[]
+
+  @@index([mobId, floorId])
+  @@index([fishConditionId])
+  @@index([chestId])
+}
+
+model ItemType {
+  id Int @id @default(autoincrement())
+  externalId String @unique
+  name String
+  reviewed Boolean @default(false)
+
+  item Item[]
+}
+
+//SHOULD WE TIE RELEASE/EPOCH INTO THE BELOW?
+model Season {
+  id Int @id @default(autoincrement())
+  externalId String @unique
+  name String
+  reviewed Boolean @default(false)
+
+  item Item[]
+}
+
+model Floor {
+  id Int @id @default(autoincrement())
+  externalId String @unique
+  name String
+  reviewed Boolean @default(false)
+
+  source Source[]
+}
+
+model FishingArea {
+  id Int @id @default(autoincrement())
+  externalId String @unique
+  name String
+  reviewed Boolean @default(false)
+
+  fishCondition FishCondition[]
+}
+
+model TokenType {
+  id Int @id @default(autoincrement())
+  externalId String @unique
+  name String
+  reviewed Boolean @default(false)
+}
+
+model CombatType {
+  id Int @id @default(autoincrement())
+  externalId String @unique
+  name String
+  reviewed Boolean @default(false)
+
+  combatDetail CombatDetail[]
+  mob Mob[]
+}
+
+//NEED NO_BAIT AND NO_TOOL TO SUPPORT 
+// UNIQUE FISH CONDITION
+model Item {
+  id Int @id @default(autoincrement())
+  externalId String @unique //DO unique key, from image path
+  gameId String? @unique //DO unique key, where available (temple, as an example)
+  reviewed Boolean @default(false)
+
+  itemName String?
+  itemImg String?
+  description String?
+
+  price Int? // store one, calculate others
+  edible Boolean?
+  seasonId Int?
+  seasonal Season? @relation(fields: [seasonId], references: [id])
+
+  itemType ItemType[]
+
+  statBlock StatBlock[]
+
+  combatDetail CombatDetail?
+
+  //combat_details links
+
+  drops ItemDrop[]
+  aggDrops AggDropDetails[]
+  baitUse FishCondition[] @relation(name: "bait")
+  toolUse FishCondition[] @relation(name: "tool")
+}
+
+model StatBlock {
+  id Int @id @default(autoincrement())
+
+  //items can give stats (food), or require stats (weapons)
+  statBlockType StatBlockType
+
+  bravery Int?
+  coordination Int?
+  creativity Int?
+  hardiness Int?
+  nutrition Int?
+
+  itemId Int
+  item Item @relation(fields: [itemId], references: [id])
+
+  @@unique([itemId, statBlockType])
+}
+
+model CombatDetail {
+  id Int @id @default(autoincrement())
+
+  combatTypeId Int?
+  combatType CombatType? @relation(fields: [combatTypeId], references: [id])
+  damage Int?
+  hpHeal Int?
+  cooldownTurns Int?
+
+  //need to figure out how to model
+  // 1. non-standard effects (Ruff Earmuffs keep you warm in cold)
+  // 2. non-standard requirements (boots)
+  // 3. status effects (flinch)
+  // maybe just defer most to description as now?
+  // see: special effects on wiki
+
+  itemId Int @unique
+  item Item @relation(fields: [itemId], references: [id])
+}
+
+model Mob {
+  id Int @id @default(autoincrement())
+
+  externalId String @unique //DO unique key
+  reviewed Boolean @default(false)
+
+  mobName String?
+  mobImg String?
+  description String?
+
+  isBoss Boolean?
+  hp Int?
+  braveryGet Int?
+
+  combatTypeId Int?
+  combatType CombatType? @relation(fields: [combatTypeId], references: [id])
+
+  //consider modeling attacks too?
+
+  source Source[]
+}
+
+
+model Chest {
+  id Int @id @default(autoincrement())
+
+  externalId String @unique //DO unique key
+  reviewed Boolean @default(false)
+
+  chestName String?
+  chestImg String?
+  description String?
+
+  source Source[]
+}

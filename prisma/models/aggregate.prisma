@@ -1,0 +1,49 @@
+//use to track and group drops across time since 
+//we don't have a stable game version
+model DropEpoch {
+    id Int @id @default(autoincrement())
+    name String
+    startsAt DateTime
+    endsAt DateTime?
+    notes String?
+
+    aggSource AggSource[]
+}
+
+model AggSource {
+    id Int @id @default(autoincrement())
+
+    sourceId Int
+    source Source @relation(fields: [sourceId], references: [id])
+    epochId Int
+    epoch DropEpoch @relation(fields: [epochId], references: [id])
+
+    totalEncounters Int //how many snapshots/encounters
+    encountersWithDrops Int //how many had drops
+    uniqueUsers Int //distinct users so we don't skew based on one user
+
+    totalCouns Int?
+    encountersWithCoins Int?
+    
+    firstSeenAt DateTime
+    lastSeenAt DateTime
+    computedAt DateTime @default(now())
+
+    items AggDropDetails[]
+    @@unique([sourceId, epochId])
+}
+
+//of encounters with drops, how many of each item has been seen
+model AggDropDetails {
+    aggSourceId Int
+    aggSource AggSource @relation(fields: [aggSourceId], references: [id], onDelete: Cascade)
+    
+    itemId Int
+    item Item @relation(fields: [itemId], references: [id])
+
+    encountersWithItem Int
+    totalQuantity Int
+    maxQuantity Int
+
+    @@id([aggSourceId, itemId])
+}

@@ -1,0 +1,13 @@
+{
+  "id": "a0c95190-43a3-4408-8d03-7f89bb2b5444",
+  "happened_at_utc": "2026-11-11T23:42:48.000Z",
+  "build_id": "ijX9dN4QGP2SbprKH1ViV",
+  "ext_version": "0.4.0",
+  "schema_version": 1,
+  "kind": "chest",
+  "floor": "Dogre's Dungeon",
+  "items": [
+    "Porcelain Gnome Head"
+  ],
+  "chest_type": "Dusty old bookshelf"
+}

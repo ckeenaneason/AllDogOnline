@@ -1,0 +1,9 @@
+//stub for future
+model User {
+    id String @id @default(uuid())
+
+    apiKeyHash String @unique
+    apiKeyLast4 String
+
+    snapshot Snapshot[]
+}

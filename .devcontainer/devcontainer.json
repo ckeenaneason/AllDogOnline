@@ -3,6 +3,9 @@
   // Reuse the compose setup: same image, bind mount and node_modules volume as `docker compose up`.
   "dockerComposeFile": "../compose.yaml",
   "service": "dev",
+  "runServices": ["dev", "db"], //start local db container for dev
+  "shutdownAction": "stopCompose",
+  "forwardPorts": [5432], //fwd postgreSQL port
   "workspaceFolder": "/app",
   // Keep the service's own command (npm install + build watcher) running while VS Code is attached.
   "overrideCommand": false,

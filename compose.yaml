@@ -26,5 +26,22 @@ services:
     profiles: ['test']
     command: sh -c "npm install --no-audit --no-fund && npm test"
 
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${ADO_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${ADO_POSTGRES_PWD}
+      POSTGRES_DB: ${ADO_POSTGRES_DB}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${ADO_POSTGRES_USER} -d ${ADO_POSTGRES_DB}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 volumes:
   node_modules:
+  pgdata:

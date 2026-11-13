@@ -1,8 +1,21 @@
-//stub for future
+/**
+ * USERS
+ * Contributors who submit snapshots from the extension
+ * Currently a stub, but allows for further expansion for full web app
+ */
+
+/// A contributor, identified by the API key their extension sends (for now).
+/// 
+/// Written by: manual, key issuance endpoint?
+/// Identity: `apiKeyHash`
+///
+/// The raw API key is NEVER stored. A lost key is replaced, not recovered.
+///
+/// @namespace Users
 model User {
     id String @id @default(uuid())
 
-    apiKeyHash String @unique
+    apiKeyHash  String @unique
     apiKeyLast4 String
 
     snapshot Snapshot[]

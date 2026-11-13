@@ -1,49 +1,94 @@
-//use to track and group drops across time since 
-//we don't have a stable game version
+/**
+ * AGGREGATES
+ * Drop statistics. Derived from user-provided snapshots. Everything except DropEpoch is rebuilt
+ * from non-revoked snapshots by `rebuildAgg()`. Never edit these tables by hand. Changes are lost
+ * on the next rebuild. Fix the snapshots (revoke/merge) the rebuild instead.
+ * Rates are computed at read time:
+ * - drop chance = encountersWithItem / totalEncounters = "how likely am I to get this item?"
+ * - avg per kill = totalQuantity / totalEncounters = "how many do I get on average, when this drops?"
+ */
+
+/// A period during which we assume loot tables are unchanged, i.e. a game 'version'. doBuildID is
+/// not used, as it changes with any Next rebuild/deploy vs. actual drop rate changes. Snapshots are
+/// assigned to an epoch by `Snapshot.recordedAt` and clamped to `Snapshot.receivedAt` if time is 
+/// in the future or implausible.
+/// Epochs must not overlap.
+///
+/// Written by: manual. Start a new epoch when a patch changes.
+/// @namespace Aggregates
 model DropEpoch {
-    id Int @id @default(autoincrement())
-    name String
-    startsAt DateTime
-    endsAt DateTime?
-    notes String?
+    id       Int       @id @default(autoincrement())
+    name     String /// e.g. `2026_10_halloween_patch`
+    startsAt DateTime /// Inclusive
+    endsAt   DateTime? /// Exclusive. Null for current.
+    notes    String? /// What changed/why created
 
     aggSource AggSource[]
 }
 
+/// Encounter totals for one drop pool within one epoch.
+///
+/// Written by: `rebuildAgg()` ONLY
+/// Identity: (`sourceId`, `epochId`)
+///
+/// @namespace Aggregates
 model AggSource {
     id Int @id @default(autoincrement())
 
     sourceId Int
-    source Source @relation(fields: [sourceId], references: [id])
-    epochId Int
-    epoch DropEpoch @relation(fields: [epochId], references: [id])
+    source   Source    @relation(fields: [sourceId], references: [id])
+    epochId  Int
+    epoch    DropEpoch @relation(fields: [epochId], references: [id])
 
-    totalEncounters Int //how many snapshots/encounters
-    encountersWithDrops Int //how many had drops
-    uniqueUsers Int //distinct users so we don't skew based on one user
+    totalEncounters     Int /// how many encounters for this source and epoch. DENOMINATOR
+    encountersWithDrops Int /// how many encounters had AN item drop
+    uniqueUsers         Int /// distinct users so we don't skew based on one user
+    encountersWithCoins Int? /// encounters with A coin drop
 
-    totalCouns Int?
-    encountersWithCoins Int?
-    
-    firstSeenAt DateTime
-    lastSeenAt DateTime
-    computedAt DateTime @default(now())
+    firstSeenAt DateTime /// Earliest `recordedAt` in this agg
+    lastSeenAt  DateTime /// Latest `recordedAt` in this agg
+    computedAt  DateTime @default(now()) /// When this row was last rebuilt
 
     items AggDropDetails[]
+    coins AggCoinDetails[]
+
     @@unique([sourceId, epochId])
 }
 
-//of encounters with drops, how many of each item has been seen
+/// Per-item drop totals for one AggSource
+///
+/// Written by: `rebuildAgg()` only
+/// Identity: (`aggSourceId`, `itemId`)
+///
+/// @namespace Aggregates
 model AggDropDetails {
     aggSourceId Int
-    aggSource AggSource @relation(fields: [aggSourceId], references: [id], onDelete: Cascade)
-    
-    itemId Int
-    item Item @relation(fields: [itemId], references: [id])
+    aggSource   AggSource @relation(fields: [aggSourceId], references: [id], onDelete: Cascade)
 
-    encountersWithItem Int
-    totalQuantity Int
-    maxQuantity Int
+    itemId Int
+    item   Item @relation(fields: [itemId], references: [id])
+
+    encountersWithItem Int /// Encounters where this item dropped at all. Drop chance NUMERATOR
+    totalQuantity      Int /// Total units across all encounters. Average-per-encoutner NUMERATOR
+    maxQuantity        Int /// Most units seen in one encounter (drop ranges)
 
     @@id([aggSourceId, itemId])
+}
+
+/// Coin totals per coin package size (e.g. 50 coins) for one AggSource
+///
+/// Written by: `rebuildAgg()` ONLY
+/// Identity
+model AggCoinDetails {
+    aggSourceId Int
+    aggSource   AggSource @relation(fields: [aggSourceId], references: [id], onDelete: Cascade)
+
+    coinId Int
+    coin   Coin @relation(fields: [coinId], references: [id])
+
+    encountersWithCoins Int /// Encounters where this coin package dropped. Drop chance NUMERATOR
+    totalQuantity       Int /// Total times this package dropped across all encounters. Average-per-encounter NUMERATOR
+    maxQuantity         Int /// Most units seen in one encounter (drop ranges)
+
+    @@id([aggSourceId, coinId])
 }

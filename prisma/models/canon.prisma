@@ -1,194 +1,315 @@
+/**
+ * CANON
+ * Game entities: items, mobs, chests, floors, and so on.
+ * Ingestion creates stubs {`reviewed = false`} for anything not currently in the
+ * database, using whatever identifiers the endpoint provided. Descriptive fields such
+ * as names, prices, stats can be filled in later, either by manual review, wiki imports,
+ * or expanded API and ingestion workflows.
+ * This describes entities only; the relationship between entities (where they drop)
+ * is derived from user snapshots via Source and the aggregation tables.
+ */
+
+/// Describes if an item requires stats or provides them
+///
+/// @namespace Canon
 enum StatBlockType {
+  /// Stats are GAINED by using the item (e.g. food)
   RECEIVED
+  /// Stats are REQUIRED to use the item (e.g. weapons)
   REQUIRED
 }
 
-model Source {
-  id Int @id @default(autoincrement())
-  type SourceType
-
-  // Unique Source Key
-  // Format: TYPE|external_id|condition
-  // Example: MOB|enemy_booby_trap|floor-2
-  // Example: FISH|spooky|gumchum|rod_ancient_angler|snowy|evening
-  key String @unique 
-  reviewed Boolean @default(false)
-  condtion String
-
-  //canon source
-  mobId Int?
-  mob Mob? @relation(fields: [mobId], references: [id])
-  chestId Int?
-  chest Chest? @relation(fields: [chestId], references: [id])
-
-  //conditions
-  floorId Int?
-  floor Floor? @relation(fields: [floorId], references: [id])
-  fishConditionId Int?
-  fishCondition FishCondition? @relation(fields: [fishConditionId], references: [id])
-  
-  aggSource AggSource[]
-  snapshots Snapshot[]
-
-  @@index([mobId, floorId])
-  @@index([fishConditionId])
-  @@index([chestId])
+/// Describes what kind of entity identifier the alias row holds. Some interactions
+/// provide only image names, while others provide the true name or even an id.
+///
+/// @namespace Canon
+enum AliasKind {
+  ID /// Unique game-provided ID, such as in the temple (e.g. `emerald_idol`)
+  NAME /// Display name, lowercased
+  IMAGE /// Image name, lowercased
 }
 
+/// One category of items, defined by doghouse search filter
+/// selections (e.g. weapon, trinket, seeds, token).
+///
+/// Written by: manual
+/// Identity: `externalId`
+///
+/// @namespace Canon
 model ItemType {
-  id Int @id @default(autoincrement())
-  externalId String @unique
-  name String
-  reviewed Boolean @default(false)
+  id         Int     @id @default(autoincrement())
+  externalId String  @unique
+  name       String
+  reviewed   Boolean @default(false)
 
   item Item[]
 }
 
-//SHOULD WE TIE RELEASE/EPOCH INTO THE BELOW?
+/// One time-limited event that impacts item drops (e.g. halloween_2026).
+/// Corresponds to item availability.
+///
+/// Written by: manual
+/// Identity: `externalId`
+///
+/// @namespace Canon
 model Season {
-  id Int @id @default(autoincrement())
-  externalId String @unique
-  name String
-  reviewed Boolean @default(false)
+  id         Int     @id @default(autoincrement())
+  externalId String  @unique
+  name       String
+  reviewed   Boolean @default(false)
 
   item Item[]
 }
 
+/// Currently one floor of the lonely tower, but may include other dungeons
+/// in the future.
+///
+/// Written by: ingest (stub from the level name)
+/// Identity: `externalId`, normalized (`Floor 2` -> `floor_2`)
+///
+/// @namespace Canon
 model Floor {
-  id Int @id @default(autoincrement())
-  externalId String @unique
-  name String
-  reviewed Boolean @default(false)
+  id         Int     @id @default(autoincrement())
+  externalId String  @unique
+  name       String
+  reviewed   Boolean @default(false)
 
   source Source[]
 }
 
+/// One unique fishing location
+///
+/// Written by: ingest (stub from `areaId)
+/// Identity: `externalId`
+///
+/// @namespace Canon
 model FishingArea {
-  id Int @id @default(autoincrement())
-  externalId String @unique
-  name String
-  reviewed Boolean @default(false)
+  id         Int     @id @default(autoincrement())
+  externalId String  @unique
+  name       String
+  reviewed   Boolean @default(false)
 
   fishCondition FishCondition[]
 }
 
-model TokenType {
-  id Int @id @default(autoincrement())
-  externalId String @unique
-  name String
-  reviewed Boolean @default(false)
+/// One coin drop package size. Coins drop in fixed amounts, so we track
+/// them as packages or 'coin items'
+///
+/// Written by: ingest
+/// Identity: `value`, e.g. `50`
+///
+/// @namespace Canon
+model Coin {
+  id    Int    @id @default(autoincrement())
+  name  String
+  value Int    @unique
+
+  coinDrop       CoinDrop[]
+  aggCoinDetails AggCoinDetails[]
 }
 
+/// Weapon/mob/trinket combat category, e.g. ranged, melee, magic
+///
+/// Written by: manual
+/// Identity: `externalId`
+///
+/// @namespace Canon
 model CombatType {
-  id Int @id @default(autoincrement())
-  externalId String @unique
-  name String
-  reviewed Boolean @default(false)
+  id         Int     @id @default(autoincrement())
+  externalId String  @unique
+  name       String
+  reviewed   Boolean @default(false)
 
   combatDetail CombatDetail[]
-  mob Mob[]
+  mob          Mob[]
+}
+
+/// One lookup key for an Item. Since items have multiple identifiers that
+/// are not always present based on event/encounter type, we solve for this
+/// by resolving the incoming item by ID, then name, then image, and adding
+/// any aliases learned to the matched item.
+///
+/// Written by: ingest; `mergeItems()` moves aliases to the surviving item.
+/// Identity: (`kind`, `value`). One alias maps to exactly one item.
+///
+/// The below conflicts flag for review rather than resolve automatically:
+///   - a known ID arriving with a new IMAGE (art change)
+///
+/// The below conflicts are automatically handled:
+///   - a known IMAGE arriving with a new NAME (ambiguous alias)
+///
+/// @namespace Canon
+model ItemAlias {
+  kind   AliasKind
+  value  String
+  itemId Int
+  item   Item      @relation(fields: [itemId], references: [id])
+
+  @@id([kind, value])
+  @@index([itemId])
+}
+
+/// A lookup key for a Mob, with the same rules and logic as ItemAlias.
+/// Tower mobs usually arrive as an image (`img/tower/enemy_booby_trap.png`).
+///
+/// Written by: ingest; mob merges.
+/// Identity: (`kind`, `value`).
+///
+/// @namespace Canon
+model MobAlias {
+  kind  AliasKind
+  value String
+  mobId Int
+  mob   Mob       @relation(fields: [mobId], references: [id])
+
+  @@id([kind, value])
+  @@index([mobId])
+}
+
+/// Some alias identifiers (image) are known to map to more than one item (e.g. cactus seeds).
+/// These ambiguous identifiers should never be used for lookup.
+///
+/// Written by: manual, ingest on shared alias detection
+/// Identity: (`kind`, `value`)
+///
+/// @namespace Canon
+model AmbiguousAlias {
+  kind  AliasKind
+  value String
+  note  String?
+
+  @@id([kind, value])
 }
 
 //NEED NO_BAIT AND NO_TOOL TO SUPPORT 
 // UNIQUE FISH CONDITION
+
+/// One game item. Includes the sentinel items `no_bait` and `no_tool`, which keep
+/// FishCondition's unique constraint free of NULLs.
+///
+/// Written by: ingest (stub via aliases), then manual review / import.
+/// Identity: Found through ItemAlias. Two rows that turn out to be the same item
+/// should be combined with `mergeItem()`, followed by `rebuildAgg()`.
+///
+/// @namespace Canon
 model Item {
   id Int @id @default(autoincrement())
-  externalId String @unique //DO unique key, from image path
-  gameId String? @unique //DO unique key, where available (temple, as an example)
+
+  alias ItemAlias[] /// All known identifiers for this item (name, image, game ID)
+
+  wikiPage String? @unique /// Wiki page title
   reviewed Boolean @default(false)
 
-  itemName String?
-  itemImg String?
+  itemName    String?
+  itemImg     String? /// Used for display. Images used for lookup belong in ItemAlias.
   description String?
 
-  price Int? // store one, calculate others
-  edible Boolean?
+  price    Int? /// Base price, calculate others.
+  edible   Boolean?
   seasonId Int?
-  seasonal Season? @relation(fields: [seasonId], references: [id])
+  seasonal Season?  @relation(fields: [seasonId], references: [id])
 
   itemType ItemType[]
 
-  statBlock StatBlock[]
+  statBlock StatBlock[] /// Up to one RECEIVED and one REQUIRED block
 
-  combatDetail CombatDetail?
+  combatDetail CombatDetail? /// Present for weapons and trinkets only
 
-  //combat_details links
-
-  drops ItemDrop[]
+  drops    ItemDrop[]
   aggDrops AggDropDetails[]
-  baitUse FishCondition[] @relation(name: "bait")
-  toolUse FishCondition[] @relation(name: "tool")
+  baitUse  FishCondition[]  @relation(name: "bait")
+  toolUse  FishCondition[]  @relation(name: "tool")
 }
 
+/// Stats an item gives or requires.
+///
+/// Written by: manual, wiki import
+/// Identity: (`itemId`, `statBlockType`). At most one block of each type per item.
+///
+/// @namespace Canon
 model StatBlock {
   id Int @id @default(autoincrement())
 
-  //items can give stats (food), or require stats (weapons)
   statBlockType StatBlockType
 
-  bravery Int?
-  coordination Int?
-  creativity Int?
-  hardiness Int?
-  nutrition Int?
+  bravery      Int? /// Null means not applicable / unknown, not zero
+  coordination Int? /// Null means not applicable / unknown, not zero
+  creativity   Int? /// Null means not applicable / unknown, not zero
+  hardiness    Int? /// Null means not applicable / unknown, not zero
+  nutrition    Int? /// Null means not applicable / unknown, not zero
 
   itemId Int
-  item Item @relation(fields: [itemId], references: [id])
+  item   Item @relation(fields: [itemId], references: [id])
 
   @@unique([itemId, statBlockType])
 }
 
+/// Combat stats for a weapon or trinket. One per item.
+///
+/// Written by: manual
+/// Identity: `itemId`
+///
+/// Not yet modeled: non-standard effects (Ruff Earmuffs keep you warm in
+/// cold), non-standard requirements (boots), status effects (flinch).
+///
+/// @namespace Canon
 model CombatDetail {
   id Int @id @default(autoincrement())
 
-  combatTypeId Int?
-  combatType CombatType? @relation(fields: [combatTypeId], references: [id])
-  damage Int?
-  hpHeal Int?
+  combatTypeId  Int?
+  combatType    CombatType? @relation(fields: [combatTypeId], references: [id])
+  damage        Int?
+  hpHeal        Int?
   cooldownTurns Int?
 
-  //need to figure out how to model
-  // 1. non-standard effects (Ruff Earmuffs keep you warm in cold)
-  // 2. non-standard requirements (boots)
-  // 3. status effects (flinch)
-  // maybe just defer most to description as now?
-  // see: special effects on wiki
-
-  itemId Int @unique
-  item Item @relation(fields: [itemId], references: [id])
+  itemId Int  @unique
+  item   Item @relation(fields: [itemId], references: [id])
 }
 
+/// One enemy from the Lonely Tower
+///
+/// Written by: ingest (stub via MobAlias), then manual
+/// Identity: found through MobAlias
+///
+/// @namespace Canon
 model Mob {
   id Int @id @default(autoincrement())
 
-  externalId String @unique //DO unique key
+  alias MobAlias[] /// All known identifiers for this mob
+
+  wikiName String? @unique /// Wiki page title
   reviewed Boolean @default(false)
 
-  mobName String?
-  mobImg String?
+  mobName     String?
+  mobImg      String?
   description String?
 
-  isBoss Boolean?
-  hp Int?
-  braveryGet Int?
+  isBoss     Boolean?
+  hp         Int?
+  braveryGet Int? /// Bravery gained for defeating this mob
 
   combatTypeId Int?
-  combatType CombatType? @relation(fields: [combatTypeId], references: [id])
+  combatType   CombatType? @relation(fields: [combatTypeId], references: [id])
 
-  //consider modeling attacks too?
+  //TODO: consider modeling attacks too?
 
   source Source[]
 }
 
-
+/// A Lonely Tower treasure chest
+///
+/// Written By: ingest (stub), then manual
+/// Identity: `externalId`
+///
+/// @namespace Canon
 model Chest {
-  id Int @id @default(autoincrement())
+  id         Int     @id @default(autoincrement())
+  externalId String  @unique //we create
+  wikiName   String? @unique /// Wiki page title
+  reviewed   Boolean @default(false)
 
-  externalId String @unique //DO unique key
-  reviewed Boolean @default(false)
-
-  chestName String?
-  chestImg String?
+  chestName   String?
+  chestImg    String?
   description String?
 
   source Source[]

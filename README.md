@@ -20,6 +20,23 @@ docker compose run --rm test sh -c "npm run typecheck && npm run build"   # one-
 docker compose run --rm test sh -c "npm run lint && npm run format:check" # ESLint + Prettier
 ```
 
+The following commands are helpful during development of the db package.
+
+```sh
+npm run shell #run apps/backend-shell/src/index.ts
+npm run dev -w @ado/backend-shell #re-runs on save
+npm run db:generate #run after editing .prisma files
+npm run db:migrate -- --name <change> #create and apply a migration
+```
+
+To completely wipe the development database:
+
+```sh
+npm run migrate:reset -w @ado/db
+# delete the migrations folder
+npm run db:migrate
+```
+
 For editing, open the folder in VS Code and run **Dev Containers: Reopen in Container** (requires the Dev Containers extension). VS Code attaches to the `dev` service, so IntelliSense, the terminal and the Vitest test explorer all use the container's dependencies, and the build watcher keeps running.
 
 Dependencies live in the `node_modules` Docker volume. After changing a `package.json`, the next `docker compose up` installs them; `docker compose build` refreshes the image layer.

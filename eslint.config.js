@@ -6,7 +6,7 @@ import tseslint from 'typescript-eslint';
 import { defineConfig } from 'eslint/config';
 
 export default defineConfig(
-  { ignores: ['**/dist/', '**/node_modules/', 'logs/'] },
+  { ignores: ['**/dist/', '**/node_modules/', 'logs/', 'packages/db/src/generated/'] },
 
   js.configs.recommended,
 
@@ -40,6 +40,11 @@ export default defineConfig(
   { files: ['packages/core/test/**/*.ts'], languageOptions: { globals: { ...globals.node } } },
 
   { files: ['apps/extension/src/**/*.ts'], languageOptions: { globals: { ...globals.browser } } },
+
+  {
+    files: ['packages/db/**/*.ts', 'apps/backend-shell/**/*.ts'],
+    languageOptions: { globals: { ...globals.node } }
+  },
 
   // Node scripts and config files (not part of any tsconfig, so no type-aware rules).
   { files: ['**/*.{js,mjs,cjs}'], languageOptions: { globals: { ...globals.node } } },

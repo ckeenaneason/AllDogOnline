@@ -15,15 +15,17 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier . --write",
-    "format:check": "prettier . --check"
+    "format:check": "prettier . --check",
+    "db:generate": "npm run generate -w @ado/db",
+    "db:migrate": "npm run migrate -w @ado/db",
+    "shell": "npm start -w @ado/backend-shell",
+    "shell:dev": "npm run dev -w @ado/backend-shell"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
-    "@types/pg": "^8.23.1",
     "eslint-config-prettier": "^10.1.8",
     "globals": "^17.13.0",
     "prettier": "^3.9.10",
-    "prisma": "^7.10.1",
     "typescript": "^5.8.3"
   },
   "allowScripts": {
@@ -32,10 +34,6 @@
     "@prisma/engines@7.10.1": true
   },
   "dependencies": {
-    "@prisma/adapter-pg": "^7.10.1",
-    "@prisma/client": "^7.10.1",
-    "dotenv": "^18.0.10",
-    "pg": "^8.23.1",
     "vitest": "5.1.0"
   }
 }

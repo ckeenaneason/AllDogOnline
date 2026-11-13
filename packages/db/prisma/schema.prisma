@@ -1,0 +1,12 @@
+// Models live in ./models/*.prisma. prisma.config.ts points `schema` at this folder,
+// so every .prisma file under it is loaded.
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+}

@@ -1,0 +1,15 @@
+{
+  "id": "0cf045c6-b1b4-4175-af91-58e80ca2ae02",
+  "happened_at_utc": "2026-11-13T00:21:16.000Z",
+  "build_id": "WYPXpnCv5MOeqaOlnP_mr",
+  "ext_version": "0.4.0",
+  "schema_version": 1,
+  "kind": "mob-kill",
+  "floor": "Peeper's Parlor",
+  "items": [
+    "Cheese",
+    "Milk",
+    "Hot Cocoa"
+  ],
+  "enemy_name": "enemy_peeper"
+}

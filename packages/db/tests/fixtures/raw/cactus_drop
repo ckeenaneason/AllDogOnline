@@ -1,0 +1,10 @@
+{
+  "result": {
+    "data": {
+      "json": {
+        "message": "You carefully approach the giant cactus, and some Flowery Cactus Seeds fall at your feet!",
+        "image": "img/item_cactus_seed.png"
+      }
+    }
+  }
+}

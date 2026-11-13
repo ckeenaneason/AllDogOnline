@@ -1,16 +1,28 @@
 {
   "name": "@ado/db",
   "version": "0.1.0",
-  "private": "true",
+  "private": true,
   "type": "module",
   "exports": {
     ".": "./src/index.ts"
   },
   "scripts": {
-    "typecheck": "tsc -p ."
+    "generate": "prisma generate",
+    "migrate": "prisma migrate dev",
+    "migrate:deploy": "prisma migrate deploy",
+    "migrate:reset": "prisma migrate reset",
+    "studio": "prisma studio",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "pg": "^8.23.1",
+    "@prisma/adapter-pg": "^7.10.1",
+    "@prisma/client": "^7.10.1",
+    "pg": "^8.23.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "@types/pg": "^8.23.1",
+    "dotenv": "^18.0.10",
     "prisma": "^7.10.1"
   }
 }

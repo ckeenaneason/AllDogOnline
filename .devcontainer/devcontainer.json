@@ -9,6 +9,11 @@
   "workspaceFolder": "/app",
   // Keep the service's own command (npm install + build watcher) running while VS Code is attached.
   "overrideCommand": false,
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {
+      "version": "latest"
+    }
+  },
   "customizations": {
     "vscode": {
       "extensions": [
